@@ -1,5 +1,18 @@
-html
-  head
-    title главная
-  body
-    h1 старт
+extends layout
+
+block title
+  title index
+
+block head
+  script(src="/js/other.js")
+
+block body
+  h2 приложения
+  - var views = require('fs').readdirSync('./views')
+  ul
+    each val in views
+      - var it = val.match(/\w+(?=\.pug$)/)
+      if it
+        li: a(href=it[0])= it[0]
+      else
+        li: a(href=val + '/index')= val + '/'
