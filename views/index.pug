@@ -5,7 +5,7 @@ block title
 
 block head
   script(src="/js/other.js")
-
+  script(src="http://localhost:8080/socket.io/socket.io.js")
 block body
   h2 приложения
   - var views = require('fs').readdirSync('./views')
@@ -16,3 +16,8 @@ block body
         li: a(href=it[0])= it[0]
       else
         li: a(href=val + '/index')= val + '/'
+  script.
+    var socket = io.connect();
+    socket.on('message', (msg) => {
+      console.log(msg)
+    })

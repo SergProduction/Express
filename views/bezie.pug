@@ -1,1 +1,38 @@
-script(src='https://cdnjs.cloudflare.com/ajax/libs/d3/4.4.3/d3.js')
+
+extends layout
+
+block head
+  link(href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css", rel="stylesheet", integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u", crossorigin="anonymous")
+  script(src='https://cdnjs.cloudflare.com/ajax/libs/d3/4.4.3/d3.js')
+  style.
+    svg line{
+      stroke: grey;
+      stroke-width: 2;
+    }
+    svg path{
+      stroke: #808080;
+      stroke-width: 2;
+      fill: none;
+    }
+    .Node{
+      border: 1px solid #b00082;
+      border-radius: 5px;
+    }
+    ul{
+      margin: 0;
+      padding: 0 5px;
+      list-style-type: none;
+    }
+    li{
+      border-bottom: 1px solid #000;
+    }
+    .node-head{
+      width: 100%;
+      background: #b00082;
+      height: 25px;
+      color: #fff;
+      padding: 0 0 0 5px;
+      text-align: center;
+    }
+block body
+  script(src="js/bezie.js")

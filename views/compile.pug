@@ -1,0 +1,174 @@
+extends layout
+
+block title
+  title webpack and gulp compile code
+
+block head
+  link(rel='stylesheet' href="http://localhost:3000/bootstrap-4.0.0/css/bootstrap.min.css")
+  script(src="http://localhost:3000/socket.io/socket.io.js")
+  style.
+    .terminal{
+      background-color: #2F5965;
+      padding: 5px;
+      height: 250px;
+      color: #fff;
+      overflow: auto;
+    }
+    .term_input{
+      background-color: #2F5965;
+      color: #fff;
+      width: 100%;
+    }
+    .btn{
+      padding: 5px;
+      font-size: 10pt;
+    }
+    button.btn:focus {
+      outline: none;
+    }
+    button{
+      margin: 5px;
+    }
+    br+br{
+      content: '';
+    }
+block body
+  h2.text-center terminal <a target="_blank" href="http://back.gibrid24.ru/assets/webpack.config.js">webpack</a>
+  pre.terminal
+  div.btn.btn-default(style="float:right") очистить терминал
+  button.btn.btn-default(data-compile-type="webpack") webpack compile ( no soursemap )
+  br
+  button.btn.btn-default(data-compile-type="webpack --watch") webpack --watch --soursemap compile start/stop
+  //button.btn.btn-default(data-compile-type="webpack --watch kill") webpack --watch --soursemap compile stop
+  br
+  h2.text-center terminal <a target="_blank" href="http:///back.gibrid24.ru/assets/templates/os2013/common/gulpfile.js">gulp</a>
+  pre.terminal
+  div.btn.btn-default(style="float:right") очистить терминал
+  button.btn.btn-default(data-compile-type="gulp") gulp compile ( no soursemap )
+  br
+  button.btn.btn-default(data-compile-type="gulp --watch") gulp --watch --soursemap compile start/stop
+  //button.btn.btn-default(data-compile-type="gulp --watch kill") gulp --watch --soursemap compile stop
+  br
+  button.btn.btn-default(data-compile-type="gulp polyfil") gulp polyfil ( делать только после gulp compile )
+  script.
+    var socket = io();
+
+    var [term, term2] = document.body.getElementsByClassName('terminal');
+    var [clear1, clear2] = document.getElementsByTagName('div');
+    var buttons = document.getElementsByTagName('button');
+    var lastClickBut = false;
+
+    buttons = Array.prototype.slice.call(buttons, 0);
+
+    buttons.forEach( el => {
+      el.addEventListener('click', e => {
+        
+        var type = e.target.getAttribute('data-compile-type')
+        
+        if( lastClickBut === e.target ){
+         type = `${type} kill`;
+        }
+
+        lastClickBut = e.target
+        
+        e.target.className = 'btn btn-warning'
+        
+        compile(type)
+      })
+    })
+
+    function clearTerm( term ){
+      term.innerHTML = ''
+    }
+
+    clear1.onclick = () => clearTerm( term )
+    clear2.onclick = () => clearTerm( term2 )
+
+
+    function compile( type ){
+
+      switch(type){
+        case 'webpack':
+          socket.emit('webpack')
+        break;
+        case 'webpack --watch':
+          socket.emit('webpack --watch')
+        break;
+        case 'webpack --watch kill':
+          socket.emit('webpack --watch kill')
+        break;
+        case 'gulp':
+          socket.emit('gulp')
+        break;
+        case 'gulp --watch':
+          socket.emit('gulp --watch')
+        break;
+        case 'gulp --watch kill':
+          socket.emit('gulp --watch kill')
+        break;
+        case 'gulp polyfil':
+          socket.emit('gulp polyfil')
+        break;
+        default:
+          console.log('нельзя использовать другие команды')
+      }
+    }
+
+    function scrollEnd( elem ){
+      if( elem.offsetHeight + elem.scrollTop != elem.scrollHeight ){
+        elem.scrollTop = elem.scrollHeight - elem.offsetHeight
+      }
+    }
+
+    function appendInTerm(term, data){
+      var wrap = document.createElement('span')
+      var output = data.data;
+
+      if( typeof output == 'object' )
+        output = JSON.stringify(output, null, 2)
+
+      var color = '#fff';
+
+      switch( data.type ){
+        case 'error':
+          color = '#f55';
+          break
+        case 'stderr':
+          color = '#ff5';
+          break
+        case 'stdout':
+          color = '#5f5';
+          break
+        default:
+          color = '#fff'
+      }
+
+      output = `<span style="color:${color}">${data.type}: </span>${output}<br>`
+
+      wrap.innerHTML = output;
+
+      term.appendChild(wrap)
+      scrollEnd(term)
+
+      console.log(data)
+    }
+    socket.on('webpack res', data => {
+      //but.classList.contains("btn-warning")
+      if( data.type == 'close'){
+        lastClickBut.className = 'btn btn-default'
+        lastClickBut = false
+      }
+      appendInTerm(term, data)
+    })
+    socket.on('gulp res', data => {
+      if( data.type == 'close'){
+        lastClickBut.className = 'btn btn-default'
+        lastClickBut = false
+      }
+      appendInTerm(term2, data)
+    })
+
+    socket.on('disconnect', data => {
+      console.log('socket disconnect, reload page', data)
+      socket.close()
+    })
