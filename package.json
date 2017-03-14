@@ -21,6 +21,10 @@
     "pug": "^2.0.0-beta6",
     "serve-favicon": "^2.3.2",
     "socket.io": "^1.7.2",
+    "virtual-console": "^1.0.1",
     "webpack": "^1.14.0"
+  },
+  "dependencies": {
+    "nedb": "^1.8.0"
   }
 }

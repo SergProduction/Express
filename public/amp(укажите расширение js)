@@ -1,0 +1,25 @@
+(function(){
+
+var cdn = "https://tproger2.azureedge.net/wp-content/themes/bliss/assets/img/tp-circle.png" //logo tproger
+
+var img = new Image()
+
+img.onerror = () => view()
+
+img.src = cdn;
+
+function view(){
+  var text = 'Если у вас не отображаються изображения, можете воспользоваться <a href="https://tproger.ru/amp/">альтернативной разметкой tproger</a>'
+  var div = document.createElement('div');
+  div.innerHTML = text;
+  div.style.cssText = `
+    background-color: #04a49c;
+    color: #fff;
+    padding: 10px;
+    text-align: center;
+  `;
+  var page = document.getElementById('page');
+  page.insertBefore(div ,page.children[0])
+}
+
+}())

@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Document</title>
+  <style>
+  #color{
+    border: 1px solid;
+    width: 160px;
+    height: 20px;
+  }
+  .panel{
+    display: inline-block;
+    width: 100%;
+  }
+  </style>
+</head>
+<body>
+  <input type="file" id="file">
+  <div class="panel">
+    <div id="color"></div>
+  </div>
+  <br>
+</body>
+<script>
+
+function createCanvas(param){
+  var opt = param || {}
+  var canvas = document.createElement('canvas')
+  canvas.style.cssText = `
+    border: 1px solid;
+    `;
+  canvas.width = opt.width || '500';
+  canvas.height = opt.height || '500';
+  document.body.appendChild(canvas)
+  return canvas
+}
+
+
+var canvas = createCanvas()
+var canvasResult = createCanvas()
+var zoom = createCanvas({width:'150', height:'150'})
+
+var ctx = canvas.getContext('2d')
+var ctxResult = canvasResult.getContext('2d')
+var zoomctx = zoom.getContext('2d')
+
+var file = document.getElementById('file');
+
+file.onchange = (e) => {
+  var fr = new FileReader();
+  fr.onload = (e) => {
+    var image = new Image();
+    image.onload = () => {
+      var propert = image.width / image.height
+      var width = image.width
+      var height = image.height
+      if( width > 500 || height > 500 ){
+        width = image.width > image.height ? 500 : propert * 500
+        height = image.width > image.height ? 500 / propert : 500
+      }
+      ctx.drawImage( image, 0, 0, width, height )
+    }
+    image.src = fr.result
+  }
+  if( file.files.length )
+    fr.readAsDataURL( file.files[0] );
+}
+
+var color = document.getElementById('color');
+
+function getPixel(param) {
+  var opt = param || {};
+  var e = event || {}
+  var x = e.layerX || 0;
+  var y = e.layerY || 0;
+  var width = opt.width || 1;
+  var height = opt.height || 1;
+  var pixel = ctx.getImageData(x, y, width, height);
+  var data = pixel.data;
+  var rgba = 'rgba(' + data[0] + ', ' + data[1] + ', ' + data[2] + ', ' + (data[3] / 255) + ')';
+  color.style.background =  rgba;
+  color.textContent = rgba;
+  return pixel
+}
+
+const DEEPCOLOR = 30 // 16
+
+
+function bit(e){
+  var x = e.layerX;
+  var y = e.layerY;
+  
+  var pixel = ctx.getImageData(0,0, 500, 500);
+  var data = pixel.data;
+
+  for (var i = 0; i < data.length; i += 4) {
+    data[i]     = Math.floor( data[i] / DEEPCOLOR ) * DEEPCOLOR;// red
+    data[i + 1] = Math.floor( data[i + 1] / DEEPCOLOR ) * DEEPCOLOR;// green
+    data[i + 2] = Math.floor( data[i + 2] / DEEPCOLOR ) * DEEPCOLOR;// blue
+  }
+  
+  ctx.putImageData( pixel, 0, 0)
+
+}
+
+function viewPixel(data){
+  //Math.sqrt( data.length / 4 )
+  var result = [];
+  for( let i=0; i < data.length; i+=4 ){
+    let measne = `${data[i]}, ${data[i+1]}, ${data[i+2]}`
+    result.push( measne )
+  }
+  return result
+}
+/*
+function scan(data){
+  var layer = [];
+  for( let i=0; i < data.length; i+=4 ){
+    var color = data[i]+data[i+1]+data[i+2]
+    for( let z=0; z < data.length; z+=4 ){
+      if( color == data[z]+data[z+1]+data[z+2] )
+        layer.push({r:data[z], g:data[z+1], b:data[z+2]})
+      else
+        layer.push({r:255, g:255, b:255})
+    }
+  }
+  return measne
+}
+*/
+
+const DIFFERENCE = 3;
+
+function scan(data){
+  var width = 500;
+  var height = 500;
+
+  function quantityColor(data){
+    let allColor = [];
+    let was = []
+    for( let i=0; i < data.length; i+=4 ){
+      let will = data[i] +','+ data[i+1] +','+ data[i+2]
+      if( !was.includes(will) ){
+        was.push(will)
+        allColor.push({r:data[i], g:data[i+1], b:data[i+2]})
+      }
+    }
+    return allColor
+  }
+
+  return quantityColor( data )
+
+  /*
+  for( let i=0; i < allColor.length; i+=1 ){
+    let lastPoint;
+    for( let z=0; z < allPixels.length; z+=1 ){
+      if(
+      allColor[i].r == allPixels[z].r &&
+      allColor[i].g == allPixels[z].g &&
+      allColor[i].b == allPixels[z].b &&
+      ){
+        lastPoint = z/4
+      }
+    }
+  }
+  */
+}
+
+function drawColor(allColor, how, sim = 0, adjacent = 1){
+  let width = 500;
+  let height = 500;
+  let pixel = ctx.getImageData(0,0, width, height);
+  let data = pixel.data;
+  /*
+  for (var i = 0; i < data.length; i += 4) {
+    if(
+      allColor[how].r != data[i]   ||
+      allColor[how].g != data[i+1] ||
+      allColor[how].b != data[i+2]
+    ){
+      data[i]   = 255
+      data[i+1] = 255
+      data[i+2] = 255
+    }
+  */
+  for (let i = 0; i < data.length; i += 4) {
+    if(
+      Math.abs(data[i]   - allColor[how].r) <= ( DEEPCOLOR * sim ) &&
+      Math.abs(data[i+1] - allColor[how].g) <= ( DEEPCOLOR * sim ) &&
+      Math.abs(data[i+2] - allColor[how].b) <= ( DEEPCOLOR * sim )
+    ){}
+    else{
+      data[i]   = 255
+      data[i+1] = 255
+      data[i+2] = 255
+    }
+  }
+  /*
+
+  for (let i = 0; i < width * 4; i += 4) {
+    if( //пиксели справа
+      data[i]   == data[ i+4 * adjacent ] &&
+      data[i+1] == data[ i+5 * adjacent ] &&
+      data[i+2] == data[ i+6 * adjacent ]
+    ){
+      break
+    }
+    else{
+      if( i - width <= 0 ){ //если всерху нет пикселей
+        if( //если нижнии такие же как и верхнии
+          data[i]   == data[ i+4 + width * adjacent ] &&
+          data[i+1] == data[ i+5 + width * adjacent ] &&
+          data[i+2] == data[ i+6 + width * adjacent ]
+        ){
+          break
+        }
+      }
+      else{ //если пиксели и всерху и внизу
+          data[i]   == data[ i+4 - width * adjacent ] &&
+          data[i+1] == data[ i+5 - width * adjacent ] &&
+          data[i+2] == data[ i+6 - width * adjacent ] &&
+          data[i]   == data[ i+4 + width * adjacent ] &&
+          data[i+1] == data[ i+5 + width * adjacent ] &&
+          data[i+2] == data[ i+6 + width * adjacent ]
+      }
+    }
+  }
+  for (var i = 0; i < data.length; i += 4) {
+    if(
+      data[i]   &&
+      data[i+1] &&
+      data[i+2]
+    ){}
+    else{
+      data[i]   = 255
+      data[i+1] = 255
+      data[i+2] = 255
+    }
+  }
+  */
+  ctxResult.putImageData( pixel, 0, 0)
+}
+
+// var colors = scan( getPixel({width:500, height: 500}).data )
+// drawColor( colors, 44 )
+
+//var a = ctx.getImageData(0, 0, 500, 500);
+//var b = scan( a.data )
+//drawColor(b,44,0)
+
+canvas.addEventListener('click', bit);
+//canvas.addEventListener('mousemove', zooming);
+canvas.addEventListener('mousemove', getPixel);
+zoom.addEventListener('mousemove', getPixel);
+
+zoomctx.imageSmoothingEnabled = false
+
+function zooming(){
+  var e = event || {}
+  var x = e.layerX || 0;
+  var y = e.layerY || 0;
+  zoomctx.drawImage(canvas,
+                  0,//Math.abs(x - 5),
+                  0,//Math.abs(y - 5),
+                  15, 15,
+                  0, 0,
+                  150, 150);
+}
+//zooming()
+
+
+function regularity(data){
+  
+  function compare(){
+    var result = [];
+    for(let i=0; data.length < i; i++){
+      for(let z=0; data.length < i; i++){
+        result.push( data[i] == data[z] ? data[z] : null )
+      }
+    }
+    return result
+  }
+
+}
+
+</script>
+</html>

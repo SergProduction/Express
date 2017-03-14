@@ -1,3 +1,6 @@
+var vc = require('virtual-console')
+
+vc({inside:true})
 
 console.log('i am other.js')
 
